@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ms"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sistem Pendaftaran Peserta NADI</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f3f7fc;--card:#fff;--tx:#14233a;--mu:#5b6b82;--pr:#1d5fd1;--pr2:#e6efff;--bd:#d5deea;--wa:#fff4d6;--wt:#7a5600;--ok:#e1f6e8;--ot:#14683a;--er:#fde4e4;--et:#9b1c1c;color-scheme:light}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1624;--card:#17233a;--tx:#e8eefb;--mu:#9fb0cb;--pr:#5b9bff;--pr2:#1f3358;--bd:#2c3d5e;--wa:#3a2f10;--wt:#ffd98a;--ok:#12331f;--ot:#7be0a4;--er:#3a1717;--et:#ffaaaa;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1624;--card:#17233a;--tx:#e8eefb;--mu:#9fb0cb;--pr:#5b9bff;--pr2:#1f3358;--bd:#2c3d5e;--wa:#3a2f10;--wt:#ffd98a;--ok:#12331f;--ot:#7be0a4;--er:#3a1717;--et:#ffaaaa;color-scheme:dark}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--pr);color:#fff;padding:12px 16px}
+header h1{margin:0;font-size:1.15rem}
+nav{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5}
+nav a{white-space:nowrap;padding:10px 14px;border-radius:10px;color:var(--tx);text-decoration:none;font-weight:600}
+nav a.on{background:var(--pr);color:#fff}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:16px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.stat b{display:block;font-size:2rem;color:var(--pr)}
+.stat span{color:var(--mu);font-size:.9rem}
+label{display:block;font-weight:600;margin:10px 0 4px}
+input,select,textarea{width:100%;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
+button,.btn{background:var(--pr);color:#fff;border:0;border-radius:10px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer;margin:4px 4px 4px 0}
+button.s{background:var(--pr2);color:var(--pr)}
+button.d{background:var(--er);color:var(--et)}
+.msg{padding:12px 14px;border-radius:10px;margin:10px 0}
+.msg.w{background:var(--wa);color:var(--wt)}.msg.o{background:var(--ok);color:var(--ot)}.msg.e{background:var(--er);color:var(--et)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
+th{background:var(--pr2);color:var(--pr)}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1 1 160px}
+.bars{display:flex;align-items:flex-end;gap:8px;height:140px;padding-top:8px}
+.bars div{flex:1;background:var(--pr);border-radius:6px 6px 0 0;min-height:2px;position:relative}
+.bars small{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:.75rem}
+.bars em{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:.7rem;font-style:normal;color:var(--mu)}
+.note{color:var(--mu);font-size:.85rem}
+@media print{header,nav,.np{display:none}body{background:#fff;color:#000}.card{border:0}}
+</style></head><body>
+<header><h1>NADI — Sistem Pendaftaran Peserta</h1></header>
+<nav id="nav"></nav>
+<main id="app"></main>
+<script>
+const CATS=['Entrepreneur','Lifelong Learning','Wellbeing','Awareness','Government'];
+const T=[
+{id:'preneur',c:0,n:'Preneur',g:'Lelaki'},
+{id:'tiny',c:1,n:'Tiny Techies',a:[7,17]},
+{id:'nurture',c:1,n:'Nurture Cybersecurity',a:[15,99]},
+{id:'tuisyen',c:1,n:'Tuisyen Rakyat',f:[1,6]},
+{id:'ekelas',c:1,n:'E Kelas Pelajar',f:[4,5]},
+{id:'esport',c:1,n:'Skill Forge (E Sport)'},
+{id:'mahir',c:1,n:'Skill Forge (Mahir)',a:[18,99]},
+{id:'ai',c:1,n:'NADI AI Programme',a:[17,99]},
+{id:'flour',c:2,n:'Flourisher',g:'Perempuan'},
+{id:'menwell',c:2,n:'Menwell',g:'Lelaki'},
+{id:'care',c:2,n:'Care'},
+{id:'kis',c:3,n:'Kempen Internet Selamat'},
+{id:'gov',c:4,n:'Government Initiative'}];
+const MS=['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const typ=id=>T.find(t=>t.id===id);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const mask=ic=>ic.length===12?ic.slice(0,6)+'-**-**'+ic.slice(10):ic;
+const monthLabel=ym=>{const[y,m]=ym.split('-');return MS[+m-1]+' '+y};
+let S={progs:[],regs:[],ym:today().slice(0,7),page:'dash',db:null,ro:false,q:'',flt:{},pg:0,sel:null};
+
+/* ---- storage: shared db when available, otherwise in-memory ---- */
+async function init(){
+  try{const c=await claude.use('db');S.db=c}catch(e){S.db=null}
+  if(S.db){
+    for(const k of['progs','regs']){
+      S.db.collection(k).onSnapshot(sn=>{S[k]=sn.docs.map(d=>({id:d.id,...d.data()}));draw()},()=>{});
+    }
+  }else{try{for(const k of['progs','regs'])S[k]=JSON.parse(localStorage.getItem('nadi_'+k)||'[]')}catch(e){}}
+  draw();
+}
+const persist=()=>{if(!S.db)try{localStorage.setItem('nadi_progs',JSON.stringify(S.progs));localStorage.setItem('nadi_regs',JSON.stringify(S.regs))}catch(e){}};
+async function save(k,o){
+  const i=S[k].findIndex(x=>x.id===o.id);
+  if(i<0)S[k].push(o);else S[k][i]=o;
+  if(S.db){try{const{id,...rest}=o;await S.db.collection(k).doc(id).set(rest)}catch(e){flash('Gagal menyimpan ke pangkalan data: '+(e.message||e),'e')}}
+  persist();draw();
+}
+async function del(k,id){
+  S[k]=S[k].filter(x=>x.id!==id);
+  if(S.db){try{await S.db.collection(k).doc(id).delete()}catch(e){flash('Gagal memadam.','e')}}
+  persist();draw();
+}
+function flash(t,c='o'){const m=$('#fl');if(m)m.innerHTML=`<div class="msg ${c}">${esc(t)}</div>`}
+
+/* ---- eligibility & IC ---- */
+function parseIC(ic){
+  if(!/^\d{12}$/.test(ic))return null;
+  const yy=+ic.slice(0,2),mm=+ic.slice(2,4),dd=+ic.slice(4,6);
+  const yr=yy>new Date().getFullYear()%100?1900+yy:2000+yy;
+  const d=new Date(yr,mm-1,dd);
+  if(d.getMonth()!==mm-1||d.getDate()!==dd)return null;
+  return{dob:d,sex:(+ic[11])%2?'Lelaki':'Perempuan'};
+}
+function ageAt(dob,ref){const r=new Date(ref);let a=r.getFullYear()-dob.getFullYear();
+  if(r<new Date(r.getFullYear(),dob.getMonth(),dob.getDate()))a--;return a}
+function eligWarn(t,sex,age,form){
+  const w=[];
+  if(t.g&&sex!==t.g)w.push(`${t.n} hanya untuk peserta ${t.g.toLowerCase()}.`);
+  if(t.a&&(age===''||age<t.a[0]||age>t.a[1]))w.push(`${t.n} untuk umur ${t.a[0]}${t.a[1]>=99?' tahun ke atas':'–'+t.a[1]+' tahun'}.`);
+  if(t.f&&(!form||form<t.f[0]||form>t.f[1]))w.push(`${t.n} untuk pelajar Tingkatan ${t.f[0]}–${t.f[1]}.`);
+  return w;
+}
+const eligText=t=>[t.g&&t.g+' sahaja',t.a&&`Umur ${t.a[0]}${t.a[1]>=99?'+':'–'+t.a[1]}`,t.f&&`Tingkatan ${t.f[0]}–${t.f[1]}`].filter(Boolean).join(', ')||'Terbuka kepada semua';
+
+/* ---- routing ---- */
+const PAGES=[['dash','Dashboard'],['reg','Daftar Peserta'],['list','Senarai Peserta'],['prog','Pengurusan Program'],['rep','Laporan Bulanan']];
+function go(p){S.page=p;S.sel=null;S.pg=0;draw();scrollTo(0,0)}
+function draw(){
+  $('#nav').innerHTML=PAGES.map(([k,n])=>`<a href="#" class="${S.page===k?'on':''}" onclick="go('${k}');return false">${n}</a>`).join('');
+  const a=$('#app');
+  if(S.page==='reg'){if(!a.querySelector('#f_name'))a.innerHTML=regView();return}
+  a.innerHTML=({dash:dashView,list:listView,prog:progView,rep:repView})[S.page]();
+}
+const monthPicker=(id,fn)=>`<input type="month" id="${id}" value="${S.ym}" onchange="S.ym=this.value||S.ym;${fn}" style="max-width:200px">`;
+const noDb=()=>S.db?'':`<div class="msg w">Pangkalan data bersama tidak tersedia dalam paparan ini. Data disimpan dalam pelayar peranti ini sahaja (tidak dikongsi dengan kakitangan lain). Gunakan Sandaran di Dashboard.</div>`;
+
+/* ---- dashboard ---- */
+function dashView(){
+  const r=S.regs.filter(x=>x.ym===S.ym);
+  const uniq=new Set(r.map(x=>x.ic)).size;
+  const ap=S.progs.filter(p=>p.ym===S.ym&&p.active).length;
+  const by=(f)=>{const m={};r.forEach(x=>m[f(x)]=(m[f(x)]||0)+1);return m};
+  const bc=by(x=>x.cat),bt=by(x=>x.type);
+  const [y]=S.ym.split('-');
+  const tr=MS.map((_,i)=>S.regs.filter(x=>x.ym===y+'-'+String(i+1).padStart(2,'0')).length);
+  const mx=Math.max(1,...tr);
+  const rows=o=>Object.entries(o).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('')||'<tr><td colspan=2 class="note">Tiada data</td></tr>';
+  const last=[...S.regs].sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,5);
+  return `${noDb()}<div class="card"><div class="row" style="align-items:end"><div><label>Bulan paparan</label>${monthPicker('m','draw()')}</div>
+  <div class="np"><button onclick="go('reg')">+ Daftar Peserta</button><button class="s" onclick="go('prog')">Urus Program</button><button class="s" onclick="go('rep')">Eksport Laporan</button></div></div></div>
+  <div class="grid"><div class="card stat"><b>${r.length}</b><span>Jumlah pendaftaran (rekod)</span></div>
+  <div class="card stat"><b>${uniq}</b><span>Peserta unik (No. KP berbeza)</span></div>
+  <div class="card stat"><b>${ap}</b><span>Program aktif bulan ini</span></div></div>
+  <div class="grid"><div class="card"><h3>Mengikut kategori</h3><table><tbody>${rows(bc)}</tbody></table></div>
+  <div class="card"><h3>Mengikut jenis program</h3><table><tbody>${rows(bt)}</tbody></table></div></div>
+  <div class="card"><h3>Trend pendaftaran ${y}</h3><div class="bars" style="margin-bottom:24px">${tr.map((v,i)=>`<div style="height:${v/mx*100}%"><small>${v||''}</small><em>${MS[i]}</em></div>`).join('')}</div></div>
+  <div class="card"><h3>Pendaftaran terkini</h3><div class="tw"><table><tbody>${last.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.prog)}</td><td>${esc(x.date)}</td></tr>`).join('')||'<tr><td class="note">Tiada rekod</td></tr>'}</tbody></table></div>
+  <button class="s np" onclick="loadSample()">Muatkan data sampel (fiksyen)</button><button class="s np" onclick="backup()">Sandaran (JSON)</button><label class="np">Pulihkan sandaran<input type="file" accept=".json" onchange="restore(this)"></label></div>`;
+}
+async function loadSample(){
+  const ym=S.ym,ps=[['tiny','Asas Robotik'],['tiny','Pengenalan AI'],['care','Kaunseling Ringkas'],['preneur','Jualan Dalam Talian']];
+  const ids=[];
+  for(const[t,n]of ps){const id=uid();ids.push(id);await save('progs',{id,ym,type:t,name:n,date:'',desc:'',active:true})}
+  const ppl=[['Ali Contoh (FIKSYEN)','100101011234','0120000001','Lelaki'],['Siti Contoh (FIKSYEN)','080303025678','0120000002','Perempuan'],['Aminah Contoh (FIKSYEN)','900505056666','0120000003','Perempuan']];
+  let i=0;
+  for(const[n,ic,ph,sx]of ppl){const t=i<2?'tiny':'care',p=S.progs.find(x=>x.ym===ym&&x.type===t);
+    const dob=parseIC(ic).dob,age=ageAt(dob,today());
+    await save('regs',regRec({name:n,ic,phone:ph,sex:sx,age,form:'',date:today()},p));i++}
+}
+function regRec(f,p){const t=typ(p.type);return{id:uid(),at:Date.now(),name:f.name,ic:f.ic,phone:f.phone,sex:f.sex,age:f.age,form:f.form||'',cat:CATS[t.c],type:t.n,typeId:t.id,prog:p.name,progId:p.id,date:f.date,ym:f.date.slice(0,7)}}
+
+async function backup(){if(!confirm('Fail sandaran mengandungi data peribadi. Simpan di tempat selamat. Teruskan?'))return;
+ try{const d=await claude.use('downloads');await d.save({filename:'NADI_sandaran_'+today()+'.json',data:JSON.stringify({progs:S.progs,regs:S.regs})})}catch(e){if(!(e&&e.code==='declined'))alert('Muat turun tidak tersedia.')}}
+function restore(inp){const f=inp.files[0];if(!f)return;f.text().then(async t=>{try{const o=JSON.parse(t);if(!confirm('Pulihkan '+(o.regs||[]).length+' pendaftaran dan '+(o.progs||[]).length+' program?'))return;for(const k of['progs','regs'])for(const x of o[k]||[])if(x&&x.id)await save(k,x);alert('Selesai.')}catch(e){alert('Fail tidak sah.')}})}
+/* ---- registration ---- */
+function regView(){
+  return `${noDb()}<div class="card"><h2>Daftar Peserta</h2><div id="fl"></div>
+  <label>Nama Peserta *</label><input id="f_name" autocomplete="off">
+  <div class="row"><div><label>Nombor Kad Pengenalan * (12 digit)</label><input id="f_ic" inputmode="numeric" maxlength="12" oninput="icChange()"></div>
+  <div><label>Nombor Telefon *</label><input id="f_ph" inputmode="tel"></div></div>
+  <div class="row"><div><label>Jantina</label><select id="f_sx"><option>Lelaki</option><option>Perempuan</option></select></div>
+  <div><label>Umur (disahkan/diubah suai oleh kakitangan)</label><input id="f_age" type="number" min="0" max="120"></div></div>
+  <div class="row"><div><label>Kategori Program *</label><select id="f_cat" onchange="catChange()"><option value="">— Pilih —</option>${CATS.map((c,i)=>`<option value="${i}">${c}</option>`).join('')}</select></div>
+  <div><label>Jenis Program *</label><select id="f_type" onchange="typeChange()"><option value="">— Pilih kategori dahulu —</option></select></div></div>
+  <div id="el" class="note"></div>
+  <label>Nama Program *</label><select id="f_prog"><option value="">— Pilih jenis program dahulu —</option></select>
+  <div id="formbox" style="display:none"><label>Tingkatan *</label><select id="f_form"><option value="">— Pilih —</option>${[1,2,3,4,5,6].map(n=>`<option>${n}</option>`).join('')}</select></div>
+  <div class="row"><div><label>Tarikh Pendaftaran</label><input id="f_date" type="date" value="${today()}" onchange="typeChange();ymShow()"></div>
+  <div><label>Bulan dan Tahun Pelaporan</label><input id="f_ym" disabled value="${monthLabel(today().slice(0,7))}"></div></div>
+  <div id="warn"></div>
+  <button onclick="submitReg(false)">Simpan Pendaftaran</button></div>`;
+}
+const ymShow=()=>{const d=$('#f_date').value;if(d)$('#f_ym').value=monthLabel(d.slice(0,7))};
+function icChange(){const p=parseIC($('#f_ic').value);if(p){$('#f_sx').value=p.sex;$('#f_age').value=ageAt(p.dob,$('#f_date').value||today())}}
+function catChange(){const c=$('#f_cat').value;
+  $('#f_type').innerHTML='<option value="">— Pilih —</option>'+T.filter(t=>String(t.c)===c).map(t=>`<option value="${t.id}">${t.n}</option>`).join('');typeChange()}
+function typeChange(){const t=typ($('#f_type').value),ym=($('#f_date').value||today()).slice(0,7);
+  $('#el').textContent=t?'Kelayakan: '+eligText(t):'';
+  $('#formbox').style.display=t&&t.f?'block':'none';
+  const ps=t?S.progs.filter(p=>p.type===t.id&&p.ym===ym&&p.active):[];
+  $('#f_prog').innerHTML=t?(ps.length?'<option value="">— Pilih —</option>'+ps.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(''):'<option value="">Tiada program aktif untuk bulan ini</option>'):'<option value="">— Pilih jenis program dahulu —</option>'}
+function submitReg(force){
+  const f={name:$('#f_name').value.trim(),ic:$('#f_ic').value.trim(),phone:$('#f_ph').value.trim(),sex:$('#f_sx').value,age:$('#f_age').value===''?'':+$('#f_age').value,form:$('#f_form').value,date:$('#f_date').value};
+  const p=S.progs.find(x=>x.id===$('#f_prog').value),t=typ($('#f_type').value);
+  const err=[];
+  if(!f.name)err.push('Nama peserta diperlukan.');
+  if(!parseIC(f.ic))err.push('Nombor kad pengenalan tidak sah (12 digit, tarikh lahir yang sah).');
+  if(!/^\+?\d{9,13}$/.test(f.phone.replace(/[\s-]/g,'')))err.push('Nombor telefon tidak sah.');
+  if(!t||!p)err.push('Sila pilih kategori, jenis dan nama program.');
+  if(!f.date)err.push('Tarikh pendaftaran diperlukan.');
+  if(err.length){$('#warn').innerHTML=`<div class="msg e">${err.map(esc).join('<br>')}</div>`;return}
+  const w=eligWarn(t,f.sex,f.age,+f.form);
+  const dup=S.regs.find(x=>x.ic===f.ic&&x.progId===p.id&&x.date===f.date);
+  if(dup)w.push(`Kemungkinan pendua: ${dup.name} sudah didaftarkan untuk program ini pada tarikh yang sama.`);
+  if(w.length&&!force){$('#warn').innerHTML=`<div class="msg w"><b>Sila semak:</b><br>${w.map(esc).join('<br>')}<br><button class="d" onclick="submitReg(true)">Teruskan juga</button></div>`;return}
+  save('regs',regRec(f,p));
+  $('#app').innerHTML=`<div class="card"><div class="msg o"><b>Pendaftaran berjaya.</b> ${esc(f.name)} → ${esc(p.name)}</div>
+  <button onclick="go('reg')">Daftar Peserta Lain</button><button class="s" onclick="go('list')">Lihat Senarai Peserta</button><button class="s" onclick="go('dash')">Kembali ke Dashboard</button></div>`;
+}
+
+/* ---- list ---- */
+function filtered(){
+  const f=S.flt,q=(S.q||'').toLowerCase();
+  return S.regs.filter(x=>(!q||x.name.toLowerCase().includes(q)||x.ic.includes(q))&&(!f.ym||x.ym===f.ym)&&(!f.cat||x.cat===f.cat)&&(!f.prog||x.prog===f.prog))
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+}
+function setF(k,v){S.flt[k]=v;S.pg=0;draw()}
+function listView(){
+  const all=filtered(),n=15,pages=Math.max(1,Math.ceil(all.length/n)),rows=all.slice(S.pg*n,S.pg*n+n);
+  const progs=[...new Set(S.regs.map(x=>x.prog))];
+  return `${noDb()}<div class="card"><h2>Senarai Peserta</h2><div class="row">
+  <input placeholder="Cari nama atau No. KP" value="${esc(S.q)}" onchange="S.q=this.value;S.pg=0;draw()">
+  <input type="month" value="${S.flt.ym||''}" onchange="setF('ym',this.value)">
+  <select onchange="setF('cat',this.value)"><option value="">Semua kategori</option>${CATS.map(c=>`<option ${S.flt.cat===c?'selected':''}>${c}</option>`).join('')}</select>
+  <select onchange="setF('prog',this.value)"><option value="">Semua program</option>${progs.map(c=>`<option ${S.flt.prog===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
+  <div class="tw"><table><thead><tr><th>Bil.</th><th>Nama</th><th>No. KP</th><th>Telefon</th><th>Jantina</th><th>Umur</th><th>Kategori</th><th>Jenis</th><th>Program</th><th>Tarikh</th><th>Bulan</th><th>Tahun</th><th></th></tr></thead><tbody>
+  ${rows.map((x,i)=>`<tr><td>${S.pg*n+i+1}</td><td>${esc(x.name)}</td><td>${mask(x.ic)}</td><td>${esc(x.phone)}</td><td>${x.sex}</td><td>${x.age}</td><td>${esc(x.cat)}</td><td>${esc(x.type)}</td><td>${esc(x.prog)}</td><td>${x.date}</td><td>${MS[+x.ym.slice(5)-1]}</td><td>${x.ym.slice(0,4)}</td><td><button class="s" onclick="S.q='${x.ic}';S.pg=0;draw()">Semua</button><button class="d" onclick="delReg('${x.id}')">Padam</button></td></tr>`).join('')||'<tr><td colspan=13 class="note">Tiada rekod</td></tr>'}</tbody></table></div>
+  <p>${all.length} rekod · Halaman ${S.pg+1}/${pages} <button class="s" ${S.pg?'':'disabled'} onclick="S.pg--;draw()">‹</button><button class="s" ${S.pg<pages-1?'':'disabled'} onclick="S.pg++;draw()">›</button>
+  <button class="s" onclick="S.q='';S.flt={};draw()">Set semula</button></p>
+  <p class="note">Butang “Semua” memaparkan semua pendaftaran peserta tersebut. No. KP dipaparkan separa untuk privasi.</p></div>`;
+}
+function delReg(id){if(confirm('Padam rekod pendaftaran ini? Tindakan ini tidak boleh dibatalkan.'))del('regs',id)}
+
+/* ---- programme management ---- */
+function progView(){
+  const sel=S.sel||T[1].id,t=typ(sel),ps=S.progs.filter(p=>p.ym===S.ym&&p.type===sel);
+  return `${noDb()}<div class="card"><h2>Pengurusan Program</h2><div class="row" style="align-items:end"><div><label>Bulan</label>${monthPicker('m','draw()')}</div>
+  <div><label>Jenis program</label><select onchange="S.sel=this.value;draw()">${T.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${CATS[x.c]} — ${x.n}</option>`).join('')}</select></div></div>
+  <p class="note">Kelayakan: ${eligText(t)}</p>
+  <div class="tw"><table><thead><tr><th>Nama program</th><th>Tarikh</th><th>Keterangan</th><th>Aktif</th><th></th></tr></thead><tbody>
+  ${ps.map(p=>`<tr><td><input value="${esc(p.name)}" onchange="upd('${p.id}','name',this.value)"></td><td><input type="date" value="${p.date||''}" onchange="upd('${p.id}','date',this.value)"></td><td><input value="${esc(p.desc||'')}" onchange="upd('${p.id}','desc',this.value)"></td>
+  <td><input type="checkbox" style="width:24px;height:24px" ${p.active?'checked':''} onchange="upd('${p.id}','active',this.checked)"></td><td><button class="d" onclick="delProg('${p.id}')">Padam</button></td></tr>`).join('')||'<tr><td colspan=5 class="note">Belum ada program untuk bulan ini.</td></tr>'}</tbody></table></div>
+  <button onclick="addProg()">+ Tambah program</button><button class="s" onclick="copyPrev()">Salin dari bulan sebelumnya</button>
+  <p class="note">Menukar nama program tidak mengubah rekod pendaftaran lama kerana nama program disimpan sebagai salinan pada setiap pendaftaran. Nyahaktifkan program yang tidak lagi ditawarkan.</p></div>`;
+}
+function addProg(){const n=prompt('Nama program:');if(n&&n.trim())save('progs',{id:uid(),ym:S.ym,type:S.sel||T[1].id,name:n.trim(),date:'',desc:'',active:true})}
+function upd(id,k,v){const p=S.progs.find(x=>x.id===id);if(!p)return;if(k==='name'&&!v.trim())return draw();save('progs',{...p,[k]:v})}
+function delProg(id){if(confirm('Padam program ini daripada senarai? Rekod pendaftaran sedia ada tidak akan dipadam. Anda juga boleh menyahaktifkannya.'))del('progs',id)}
+async function copyPrev(){
+  const[y,m]=S.ym.split('-').map(Number),pd=new Date(y,m-2,1),pym=pd.getFullYear()+'-'+String(pd.getMonth()+1).padStart(2,'0');
+  const src=S.progs.filter(p=>p.ym===pym&&p.type===(S.sel||T[1].id));
+  if(!src.length)return alert('Tiada program pada '+monthLabel(pym)+'.');
+  for(const p of src)if(!S.progs.some(x=>x.ym===S.ym&&x.type===p.type&&x.name===p.name))await save('progs',{...p,id:uid(),ym:S.ym,date:'',active:true});
+}
+
+/* ---- reports ---- */
+function repView(){
+  const f=S.flt,r=S.regs.filter(x=>x.ym===S.ym&&(!f.rcat||x.cat===f.rcat)&&(!f.rtype||x.type===f.rtype));
+  const grp=(k)=>{const m={};r.forEach(x=>{const key=k(x);(m[key]=m[key]||[]).push(x)});return m};
+  const gp=grp(x=>x.cat+'|'+x.type+'|'+x.prog),gc=grp(x=>x.cat);
+  const uq=a=>new Set(a.map(x=>x.ic)).size;
+  return `${noDb()}<div class="card"><h2>Laporan Bulanan — ${monthLabel(S.ym)}</h2><div class="row np" style="align-items:end"><div><label>Bulan</label>${monthPicker('m','draw()')}</div>
+  <div><label>Kategori</label><select onchange="setF('rcat',this.value)"><option value="">Semua</option>${CATS.map(c=>`<option ${f.rcat===c?'selected':''}>${c}</option>`).join('')}</select></div>
+  <div><label>Jenis program</label><select onchange="setF('rtype',this.value)"><option value="">Semua</option>${T.map(t=>`<option ${f.rtype===t.n?'selected':''} value="${t.n}">${t.n}</option>`).join('')}</select></div></div>
+  <div class="np"><button onclick="exportCSV('detail')">Muat turun CSV (senarai peserta)</button><button class="s" onclick="exportCSV('sum')">CSV ringkasan program</button><button class="s" onclick="print()">Cetak (A4)</button></div>
+  <p class="note np">Eksport XLSX tidak tersedia dalam prototaip ini. Fail CSV boleh dibuka terus dalam Excel dengan No. KP dan telefon sebagai teks.</p>
+  <h3>D. Gambaran bulanan</h3><p>Jumlah pendaftaran: <b>${r.length}</b> · Peserta unik: <b>${uq(r)}</b> · Program dengan pendaftaran: <b>${Object.keys(gp).length}</b></p>
+  <h3>C. Ringkasan mengikut kategori</h3><table><thead><tr><th>Kategori</th><th>Pendaftaran</th></tr></thead><tbody>${CATS.map(c=>`<tr><td>${c}</td><td>${(gc[c]||[]).length}</td></tr>`).join('')}</tbody></table>
+  <h3>B. Ringkasan mengikut program</h3><div class="tw"><table><thead><tr><th>Kategori</th><th>Jenis</th><th>Program</th><th>Pendaftaran</th><th>Peserta unik</th></tr></thead><tbody>
+  ${Object.entries(gp).map(([k,a])=>{const[c,t,p]=k.split('|');return `<tr><td>${esc(c)}</td><td>${esc(t)}</td><td>${esc(p)}</td><td>${a.length}</td><td>${uq(a)}</td></tr>`}).join('')||'<tr><td colspan=5 class="note">Tiada data</td></tr>'}</tbody></table></div>
+  <p class="note">Dijana pada ${new Date().toLocaleString('ms-MY')}</p></div>`;
+}
+const txt=v=>'="'+String(v).replace(/"/g,'""')+'"';
+const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+async function exportCSV(kind){
+  const f=S.flt,r=S.regs.filter(x=>x.ym===S.ym&&(!f.rcat||x.cat===f.rcat)&&(!f.rtype||x.type===f.rtype));
+  if(kind==='detail'&&!confirm('Fail ini mengandungi maklumat peribadi (No. KP dan telefon). Teruskan eksport?'))return;
+  let rows;
+  if(kind==='detail'){rows=[['Bil.','Nama Peserta','Nombor Kad Pengenalan','Nombor Telefon','Jantina','Umur','Kategori Program','Jenis Program','Nama Program','Tarikh Pendaftaran','Bulan','Tahun'].map(q).join(',')];
+    r.forEach((x,i)=>rows.push([i+1,q(x.name),txt(x.ic),txt(x.phone),x.sex,x.age,q(x.cat),q(x.type),q(x.prog),x.date,+x.ym.slice(5),x.ym.slice(0,4)].join(',')))}
+  else{const m={};r.forEach(x=>{const k=x.cat+'|'+x.type+'|'+x.prog;(m[k]=m[k]||[]).push(x)});
+    rows=[['Kategori','Jenis Program','Nama Program','Jumlah Pendaftaran','Peserta Unik'].map(q).join(',')];
+    Object.entries(m).forEach(([k,a])=>rows.push([...k.split('|').map(q),a.length,new Set(a.map(x=>x.ic)).size].join(',')))}
+  const name=`NADI_${kind==='detail'?'Peserta':'Ringkasan'}_${S.ym}.csv`,data='\ufeff'+rows.join('\r\n');
+  try{const d=await claude.use('downloads');if(!d)throw 0;await d.save({filename:name,data})}catch(e){if(e&&e.code==='declined')return;alert('Muat turun tidak tersedia dalam paparan ini.')}
+}
+init();
+</script></body></html>
