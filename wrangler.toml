@@ -1,2 +1,5 @@
-name = "nadi-pendaftaran"
-pages_build_output_dir = "./public"
+name = "pendaftaran"
+compatibility_date = "2026-10-22"
+
+[assets]
+directory = "./public"
